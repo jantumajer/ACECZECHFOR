@@ -8,22 +8,22 @@ library(multcomp, pos=16)
 
 parametry <- readXL("F:/IFER/###VSLite/Octave/parametry/Bayes_parametry.xlsx", rownames=TRUE, header=TRUE, na="", sheet="souhRn", stringsAsFactors=TRUE)
 
-parametry <- within(parametry, {Vyskovy.stupeò <- as.factor(Vyskovy.stupeò)})
+parametry <- within(parametry, {Vyskovy.stupeÃ² <- as.factor(Vyskovy.stupeÃ²)})
 
 
 ### Prumer + sd pro celek a jednotlive vyskove urovne
 numSummary(parametry[,c("X73_M1_rd500", "X73_M2_rd500", "X73_T1_rd500", "X73_T2_rd500")], statistics=c("mean", "sd"), quantiles=c(0,.25,.5,.75,1))
 numSummary(parametry[,c("X73_M1_rd500", "X73_M2_rd500", "X73_T1_rd500", "X73_T2_rd500")], 
-  groups=parametry$Vyskovy.stupeò, statistics=c("mean", "sd"), quantiles=c(0,.25,.5,.75,1))
+  groups=parametry$Vyskovy.stupeÃ², statistics=c("mean", "sd"), quantiles=c(0,.25,.5,.75,1))
 
 ### ANOVA
-AnovaModel.1 <- aov(X73_M1_rd500 ~ Vyskovy.stupeò, data=parametry)
+AnovaModel.1 <- aov(X73_M1_rd500 ~ Vyskovy.stupeÃ², data=parametry)
 summary(AnovaModel.1)
-AnovaModel.2 <- aov(X73_M2_rd500 ~ Vyskovy.stupeò, data=parametry)
+AnovaModel.2 <- aov(X73_M2_rd500 ~ Vyskovy.stupeÃ², data=parametry)
 summary(AnovaModel.2)
-AnovaModel.3 <- aov(X73_T1_rd500 ~ Vyskovy.stupeò, data=parametry)
+AnovaModel.3 <- aov(X73_T1_rd500 ~ Vyskovy.stupeÃ², data=parametry)
 summary(AnovaModel.3)
-AnovaModel.4 <- aov(X73_T2_rd500 ~ Vyskovy.stupeò, data=parametry)
+AnovaModel.4 <- aov(X73_T2_rd500 ~ Vyskovy.stupeÃ², data=parametry)
 summary(AnovaModel.4)
 parametry <- read.table("clipboard", header=TRUE, sep="\t", na.strings="NA", dec=",", strip.white=TRUE)
 library(relimp, pos=21)
