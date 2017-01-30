@@ -3,7 +3,7 @@
 strom.vek <- read.table("clipboard", header=TRUE, sep="\t", na.strings="NA",  dec=".", strip.white=TRUE)
 plot.pocet <- read.table("clipboard", header=TRUE, sep="\t", na.strings="NA", dec=".", strip.white=TRUE)
 plot.vyska <- read.table("clipboard", header=TRUE, sep="\t", na.strings="NA", dec=".", strip.white=TRUE)
-plot.vyska <- within(plot.vyska, { VS_factor <- as.factor(Vyskovy.stupeò)}) # Vysku je nutne prevest na faktor
+plot.vyska <- within(plot.vyska, { VS_factor <- as.factor(Vyskovy.stupeÃ²)}) # Vysku je nutne prevest na faktor
 
 ### Normalita residualu
 
@@ -14,17 +14,17 @@ with(res, shapiro.test(V1))
 ### Rozdily ve veku mezi vyskovymi stupni
 
 vek.vyska <- merge(strom.vek, plot.vyska[,c(1,10,13)], by="IDPlot") # Vsechny stromy
-vek.vyska.2 <- subset(vek.vyska, subset=Vìk>74) # Jenom ty, ktere jsou starsi nez 74 let (tj. od 1940)
+vek.vyska.2 <- subset(vek.vyska, subset=VÃ¬k>74) # Jenom ty, ktere jsou starsi nez 74 let (tj. od 1940)
 
 
 par(mfrow=c(2,1))
-Boxplot(Vìk~VS_factor, data=vek.vyska, id.method="n", xlab="Elevation belt", ylab="Age", ylim=c(20,160))
-Boxplot(Vìk~VS_factor, data=vek.vyska.2, id.method="n", xlab="Elevation belt", ylab="Age", ylim=c(70,160))
+Boxplot(VÃ¬k~VS_factor, data=vek.vyska, id.method="n", xlab="Elevation belt", ylab="Age", ylim=c(20,160))
+Boxplot(VÃ¬k~VS_factor, data=vek.vyska.2, id.method="n", xlab="Elevation belt", ylab="Age", ylim=c(70,160))
 
-AnovaModel.1 <- aov(Vìk ~ VS_factor, data=vek.vyska) # Signifikantni ANOVA, nesignifikantni post-hoc
+AnovaModel.1 <- aov(VÃ¬k ~ VS_factor, data=vek.vyska) # Signifikantni ANOVA, nesignifikantni post-hoc
 summary(AnovaModel.1); TukeyHSD(x=AnovaModel.1)
 
-AnovaModel.2 <- aov(Vìk ~ VS_factor, data=vek.vyska.2) # rozdil mezi 6 a 1
+AnovaModel.2 <- aov(VÃ¬k ~ VS_factor, data=vek.vyska.2) # rozdil mezi 6 a 1
 summary(AnovaModel.2); TukeyHSD(x=AnovaModel.2)
 
 ### Rozdily v poctu stromu mezi vyskovymi stupni
