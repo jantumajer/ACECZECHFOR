@@ -15,7 +15,7 @@ j <- 1
 subset <-data.frame(C=c(1:73))
 sub.1 <-subset; sub.3 <-subset; sub.5 <-subset; sub.all <-subset
 
-### 1] vyber serii z dane plochy
+### 1] vyber serie z dane plochy
 for (i in (1:ncol(perm))) {
 	if (as.character(df[1,i])==name) {subset[,j]<-perm[,i];
 						 j<-j+1}
