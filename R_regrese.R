@@ -1,4 +1,5 @@
 library(lme4); library(nlme)
+library(piecewiseSEM) 
 
 Dataset <- readXL("F:/IFER/trendy/klimadata/Database_1961to2013.xlsx", rownames=FALSE, header=TRUE, na="", sheet="trend+vysokofrekvencni", stringsAsFactors=TRUE)
 
@@ -6,17 +7,196 @@ Dataset <- readXL("F:/IFER/trendy/klimadata/Database_1961to2013.xlsx", rownames=
 #################
 # Pocitana jenom za obdobi 1961-2010
 
-Dataset_GLM <- Dataset[c(54:103, 107:156, 160:209),]
+Dataset_GLM <- Dataset[c(54:212),] # do roku 2013
+
+########################
+
+# Konstrukce modelu (podle Bates (2010): lme4:Mixed-effects modeling with R, kapitola 3.2.):
+# fixni efekty - populacni intercept a populacni smernice nezavislych promennych
+# nahodne efekty (...|...) - odchylky od populacniho interceptu a smernice nezavisle promenne pro danou kategorii
+# | pouzit, pokud korelace mezi nahodnymi efekty je vysoka (viz summary modelu), jinak ||
+
+
+MELM.A <- lmer(TRW_A ~ (1 + T.3.5._A + Veg_Prec_A * NDEP_A + CO2|Pasmo) + 1 + T.3.5._A + Veg_Prec_A * NDEP_A + CO2, data=Dataset_GLM) 						# Model zalozeny na REML
+summary(MELM.A) # Shrnuti
+coef(MELM.A) # Koeficienty (fixni+nahodny)
+fixef(MELM.A); ranef(MELM.A, condVar=T) # Koeficienty (zvlast fixni a nahodny)
+
+shapiro.test(residuals(MELM.A)) # Normalita residualu
+
+###
+MELM.B <- lmer(TRW_B ~ (1 + T.3.5._B + NDEP_B + Veg_Prec_B + CO2|Pasmo) + 1 + T.3.5._B + Veg_Prec_B + NDEP_B + CO2, data=Dataset_GLM)
+summary(MELM.B)
+coef(MELM.B)
+fixef(MELM.B); ranef(MELM.B)
+
+shapiro.test(residuals(MELM.B))
+
+##################
+### GLM modely ###
+
+GLM.A <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A * NDEP_A + CO2, family=gaussian(identity), data=Dataset_GLM) # Varianta se zachovanim NDEP v interakci se srazkami - nizsi AIC, vyssi BIC
+# GLM.A <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + CO2, family=gaussian(identity), data=Dataset_GLM) # Varianta s vypustenim NDEP - vyssi AIC, nizsi BIC
+
+summary(GLM.A)
+coef(GLM.A)
+vif(GLM.A)
+
+###
+GLM.B <- glm(TRW_B ~ Pasmo + T.3.5._B  + Veg_Prec_B + NDEP_B + CO2, family=gaussian(identity), data=Dataset_GLM)
+summary(GLM.B)
+coef(GLM.B)
+vif(GLM.B)
+
+###################
+### Citlivostni analyza
+
+# Priprava modelu
+MELM.A_co2 <- lmer(TRW_A ~ (1 + T.3.5._A + Veg_Prec_A * NDEP_A |Pasmo) + 1 + T.3.5._A + Veg_Prec_A * NDEP_A , data=Dataset_GLM)
+MELM.A_N <- lmer(TRW_A ~ (1 + T.3.5._A + Veg_Prec_A + CO2|Pasmo) + 1 + T.3.5._A + Veg_Prec_A + CO2, data=Dataset_GLM)
+MELM.A_co2_N <- lmer(TRW_A ~ (1 + T.3.5._A + Veg_Prec_A |Pasmo) + 1 + T.3.5._A + Veg_Prec_A, data=Dataset_GLM)
+
+MELM.B_co2 <- lmer(TRW_B ~ (1 + T.3.5._B + NDEP_B + Veg_Prec_B |Pasmo) + 1 + T.3.5._B + Veg_Prec_B + NDEP_B , data=Dataset_GLM)
+MELM.B_N <- lmer(TRW_B ~ (1 + T.3.5._B + Veg_Prec_B + CO2|Pasmo) + 1 + T.3.5._B + Veg_Prec_B + CO2, data=Dataset_GLM)
+MELM.B_co2_N <- lmer(TRW_B ~ (1 + T.3.5._B + Veg_Prec_B |Pasmo) + 1 + T.3.5._B + Veg_Prec_B, data=Dataset_GLM)
+
+GLM.A_co2 <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A * NDEP_A, family=gaussian(identity), data=Dataset_GLM)
+GLM.A_N <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + CO2, family=gaussian(identity), data=Dataset_GLM)
+GLM.A_co2_N <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A, family=gaussian(identity), data=Dataset_GLM)
+
+GLM.B_co2 <- glm(TRW_B ~ Pasmo + T.3.5._B  + Veg_Prec_B + NDEP_B, family=gaussian(identity), data=Dataset_GLM)
+GLM.B_N <- glm(TRW_B ~ Pasmo + T.3.5._B  + Veg_Prec_B + CO2, family=gaussian(identity), data=Dataset_GLM)
+GLM.B_co2_N <- glm(TRW_B ~ Pasmo + T.3.5._B  + Veg_Prec_B, family=gaussian(identity), data=Dataset_GLM)
+
+# Doplnek o klimadata
+MELM.A_P <- lmer(TRW_A ~ (1 + T.3.5._A +  NDEP_A + CO2|Pasmo) + 1 + T.3.5._A +  NDEP_A + CO2 , data=Dataset_GLM)
+MELM.A_T <- lmer(TRW_A ~ (1  + Veg_Prec_A * NDEP_A + CO2|Pasmo) + 1 + Veg_Prec_A * NDEP_A + CO2, data=Dataset_GLM)
+
+MELM.B_P <- lmer(TRW_B ~ (1 + T.3.5._B + NDEP_B + CO2|Pasmo) + 1 + T.3.5._B + NDEP_B + CO2 , data=Dataset_GLM)
+MELM.B_T <- lmer(TRW_B ~ (1 + Veg_Prec_B + NDEP_B + CO2|Pasmo) + 1 + Veg_Prec_B + NDEP_B + CO2, data=Dataset_GLM)
+
+GLM.A_P <- glm(TRW_A ~ Pasmo + T.3.5._A + NDEP_A + CO2, family=gaussian(identity), data=Dataset_GLM)
+GLM.A_T <- glm(TRW_A ~ Pasmo + Veg_Prec_A * NDEP_A + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+GLM.B_P <- glm(TRW_B ~ Pasmo + T.3.5._B + NDEP_B + CO2, family=gaussian(identity), data=Dataset_GLM)
+GLM.B_T <- glm(TRW_B ~ Pasmo + Veg_Prec_B + NDEP_B + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+### funkce
+p <- function(model, AB, typ="G") {
+	dataframe <- data.frame(ID=NA)
+
+	if (typ=="M") {model <- update(model, REML=FALSE)}
+
+	if (AB=="A")	{dataframe[1,1] <- (summary(lm(TRW_A ~ predict(model), data=Dataset_GLM))$adj.r.squared)}
+	if (AB=="B")	{dataframe[1,1] <- (summary(lm(TRW_B ~ predict(model), data=Dataset_GLM))$adj.r.squared)}
+	dataframe[2,1] <- (AIC(model))
+	dataframe[3,1] <- (BIC(model))
+	
+	rownames(dataframe) <- c("R2", "AIC", "BIC")
+	return(dataframe)
+	}
+
+### vypocet
+modely <- cbind(p(MELM.A, "A", "M"), p(MELM.A_co2, "A", "M"), p(MELM.A_N, "A", "M"), p(MELM.A_co2_N, "A", "M"), p(MELM.B, "B", "M"), p(MELM.B_co2, "B", "M"), p(MELM.B_N, "B", "M"), p(MELM.B_co2_N, "B", "M"),
+	p(GLM.A, "A"), p(GLM.A_co2, "A"), p(GLM.A_N, "A"), p(GLM.A_co2_N, "A"), p(GLM.B, "B"), p(GLM.B_co2, "B"), p(GLM.B_N, "B"), p(GLM.B_co2_N, "B"))
+
+colnames(modely) <- c("MELM.A", "MELM.A_co2", "MELM.A_N", "MELM_A_co2_N", "MELM.B", "MELM.B_co2", "MELM.B_N", "MELM_B_co2_N", 
+			"GLM.A", "GLM.A_co2", "GLM.A_N", "GLM_A_co2_N", "GLM.B", "GLM.B_co2", "GLM.B_N", "GLM_B_co2_N")
+
+write.table(modely, "C:/Users/PC/Desktop/modely.txt", sep="\t", col.names=TRUE, row.names=TRUE, quote=TRUE, na="NA")
+
+# doplneni o klima
+modely_doplneni <- cbind(p(MELM.A, "A", "M"), p(MELM.A_T, "A", "M"), p(MELM.A_P, "A", "M"), p(MELM.B, "B", "M"), p(MELM.B_T, "B", "M"), p(MELM.B_P, "B", "M"),
+	p(GLM.A, "A"), p(GLM.A_T, "A"), p(GLM.A_P, "A"), p(GLM.B, "B"), p(GLM.B_T, "B"), p(GLM.B_P, "B"))
+
+colnames(modely_doplneni) <- c("MELM.A", "MELM.A_T", "MELM.A_P", "MELM.B", "MELM.B_T", "MELM.B_P", 
+			"GLM.A", "GLM.A_T", "GLM.A_P", "GLM.B", "GLM.B_T", "GLM.B_P")
+
+
+##################
+### Citlivostni analyza - puvodni
+
+citlivost <- function(model, odchylka, AB, transf=FALSE) {
+
+	nd.CO2 <- Dataset_GLM; nd.CO2$CO2 <- with(nd.CO2, CO2*(1+odchylka))
+	if (AB=="A") {
+		nd.Veg_Prec <- Dataset_GLM; nd.Veg_Prec$Veg_Prec_A <- with(nd.Veg_Prec, Veg_Prec_A*(1+odchylka))
+		nd.T <- Dataset_GLM; nd.T$T.3.5._A <- with(nd.T, T.3.5._A*(1+odchylka))
+		nd.NDEP <- Dataset_GLM; nd.NDEP$NDEP_A <- with(nd.NDEP, NDEP_A*(1+odchylka))}
+
+	if (AB=="B") {
+		nd.Veg_Prec <- Dataset_GLM; nd.Veg_Prec$Veg_Prec_B <- with(nd.Veg_Prec, Veg_Prec_B*(1+odchylka))
+		nd.T <- Dataset_GLM; nd.T$T.3.5._B <- with(nd.T, T.3.5._B*(1+odchylka))
+		nd.NDEP <- Dataset_GLM; nd.NDEP$NDEP_B <- with(nd.NDEP, NDEP_B*(1+odchylka))}
+
+	if (transf==TRUE) {
+		nd.CO2[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")] <- scale(nd.CO2[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")])
+		nd.Veg_Prec[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")] <- scale(nd.Veg_Prec[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")])
+		nd.T[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")] <- scale(nd.T[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")])
+		nd.NDEP[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")] <- scale(nd.NDEP[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","Veg_Prec_A","Veg_Prec_B")])}
+
+
+	pred.orig <- predict(model)
+	pred.CO2 <- predict(model, newdata=nd.CO2)
+	pred.Veg_Prec <- predict(model, newdata=nd.Veg_Prec)
+	pred.T <- predict(model, newdata=nd.T)
+	pred.NDEP <- predict(model, newdata=nd.NDEP)
+
+	podil.CO2 <- 100*((pred.CO2/pred.orig)-1)
+	podil.Veg_Prec <- 100*((pred.Veg_Prec/pred.orig)-1)
+	podil.T <- 100*((pred.T/pred.orig)-1)
+	podil.NDEP <- 100*((pred.NDEP/pred.orig)-1)
+
+	return(list(CO2=cbind(VSE=mean(podil.CO2), Pasmo1=mean(podil.CO2[1:53]), Pasmo2=mean(podil.CO2[54:106]), Pasmo3=mean(podil.CO2[107:159])),
+		PREC=cbind(VSE=mean(podil.Veg_Prec), Pasmo1=mean(podil.Veg_Prec[1:53]), Pasmo2=mean(podil.Veg_Prec[54:106]), Pasmo3=mean(podil.Veg_Prec[107:159])),
+		TEMP=cbind(VSE=mean(podil.T), Pasmo1=mean(podil.T[1:53]), Pasmo2=mean(podil.T[54:106]), Pasmo3=mean(podil.T[107:159])),
+		NDEP=cbind(VSE=mean(podil.NDEP), Pasmo1=mean(podil.NDEP[1:53]), Pasmo2=mean(podil.NDEP[54:106]), Pasmo3=mean(podil.NDEP[107:159]))
+		# ,chrono=cbind(podil.CO2, podil.Veg_Prec, podil.T, podil.NDEP)
+	)) }
+
+
+t <- FALSE
+
+citlivost(GLM.A, 0.1, "A", t)
+citlivost(GLM.B, 0.1, "B", t)
+citlivost(MELM.A, 0.1, "A", t)
+citlivost(MELM.B, 0.1, "B", t)
+
+
+################# Normalita dat ######################
+
+Dataset_GLM <- Dataset[c(54:212),] # do roku 2013
+Dataset_GLM <- subset(Dataset_GLM, subset=Pasmo==1)
+
+with(Dataset_GLM, shapiro.test(CO2))
+with(Dataset_GLM, shapiro.test(NDEP_A))
+with(Dataset_GLM, shapiro.test(NDEP_B))
+with(Dataset_GLM, shapiro.test(T.3.5._A))
+with(Dataset_GLM, shapiro.test(T.3.5._B))
+with(Dataset_GLM, shapiro.test(TRW_A))
+with(Dataset_GLM, shapiro.test(TRW_B))
+with(Dataset_GLM, shapiro.test(Veg_Prec_A))
+with(Dataset_GLM, shapiro.test(Veg_Prec_B))
 
 #### Standardizace ####
+#######################
+# nepouzivame #
 
-Dataset_GLM <- local({
-  .Z <- scale(Dataset_GLM[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","TRW_A","TRW_B","Veg_Prec_A","Veg_Prec_B")])
-  within(Dataset_GLM, {
+Dataset_out <- t(data.frame(rep(NA, 25))); colnames(Dataset_out) <- colnames(Dataset_GLM)
+
+for (i in c(1:3)) {
+
+Dataset_GLM_subset <- subset(Dataset_GLM, subset=Pasmo==i)
+
+Dataset_GLM_subset <- local({
+  .Z <- scale(Dataset_GLM_subset[,c("CO2","NDEP_A","NDEP_B","T.3.5._A","T.3.5._B","TRW_A","TRW_B","Veg_Prec_A","Veg_Prec_B","P.3.9._A","P.3.9._B")])
+  within(Dataset_GLM_subset, {
+    P.3.9._B <- .Z[,11]
+    P.3.9._A <- .Z[,10]
     Veg_Prec_B <- .Z[,9]
     Veg_Prec_A <- .Z[,8]
-    TRW_B <- .Z[,7]
-    TRW_A <- .Z[,6]
+  #  TRW_B <- .Z[,7]
+  #  TRW_A <- .Z[,6]
     T.3.5._B <- .Z[,5]
     T.3.5._A <- .Z[,4]
     NDEP_B <- .Z[,3]
@@ -24,65 +204,12 @@ Dataset_GLM <- local({
     CO2 <- .Z[,1] 
   })
 })
+Dataset_out <- rbind(Dataset_out, Dataset_GLM_subset)
+}
+
+Dataset_GLM <- Dataset_out[c(2:nrow(Dataset_out)),]
+
 
 ########################
-# Konstrukce modelu (podle Bates (2010): lme4:Mixed-effects modeling with R, kapitola 3.2.):
-# fixni efekty - populacni intercept a populacni smernice nezavislych promennych
-# nahodne efekty (...|...) - odchylky od populacniho interceptu a smernice nezavisle promenne pro danou kategorii
-# | pouzit, pokud korelace mezi nahodnymi efekty je vysoka (viz summary modelu), jinak ||
+########################
 
-
-MELM.A <- lmer(TRW_A ~ (1 + NDEP_A + T.3.5._A + Veg_Prec_A|Pasmo) + 1 + NDEP_A + T.3.5._A + Veg_Prec_A + CO2  , data=Dataset_GLM) 						# Model zalozeny na REML
-summary(MELM.A) # Shrnuti
-coef(MELM.A) # Koeficienty (fixni+nahodny)
-fixef(MELM.A); ranef(MELM.A) # Koeficienty (zvlast fixni a nahodny)
-# (conf.A <- confint(MELM.A, "beta_", 0.95)) # p-value - prechod pres nulu
-
-pred.A <- predict(MELM.A) # Modelovane hodnoty + residualy
-res.A <- residuals(MELM.A)
-cor(Dataset_GLM$TRW_A,pred.A)
-cor(Dataset_GLM$TRW_A,abs(res.A))
-lineplot(Dataset_GLM$YEAR,res.A)
-shapiro.test(res.A) # Normalita residualu
-
-###
-MELM.B <- lmer(TRW_B ~ (1 + NDEP_B + T.3.5._B + Veg_Prec_B|Pasmo) + 1 + NDEP_B + T.3.5._B + Veg_Prec_B + CO2, data=Dataset_GLM)
-summary(MELM.B)
-coef(MELM.B)
-fixef(MELM.B); ranef(MELM.B)
-# (conf.B <- confint(MELM.B, "beta_", 0.95))
-
-pred.B <- predict(MELM.B)
-res.B <- residuals(MELM.B)
-cor(Dataset_GLM$TRW_B,pred.B)
-cor(Dataset_GLM$TRW_B,res.B)
-lineplot(Dataset_GLM$YEAR,res.B)
-shapiro.test(res.B)
-
-##################
-### Mixed modely s Maximum-likelyhood
-
-MELM.A.ml <- update(MELM.A, REML=FALSE)				# Mixed-effect model zalozeny na ML
-MELM.B.ml <- update(MELM.B, REML=FALSE)
-
-##################
-### GLM modely ###
-GLM.A <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + CO2 + NDEP_A , family=gaussian(identity), data=Dataset_GLM)
-summary(GLM.A)
-coef(GLM.A)
-vif(GLM.A)
-cor(Dataset_GLM$TRW_A,predict(GLM.A))
-
-GLM.B <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B + CO2 + NDEP_B  , family=gaussian(identity), data=Dataset_GLM)
-summary(GLM.B)
-coef(GLM.B)
-vif(GLM.B)
-cor(Dataset_GLM$TRW_B,predict(GLM.B))
-
-################
-### Srovnani ###
-
-extractAIC(MELM.A.ml)
-extractAIC(MELM.B.ml)
-extractAIC(GLM.A)
-extractAIC(GLM.B)
