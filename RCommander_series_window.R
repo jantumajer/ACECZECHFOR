@@ -5,9 +5,9 @@
 library(dplR); library(treeclim)
 
 ### Cesta ke zdrojovemu rwl souboru
-serie.zdroj <- read.rwl("F:/IFER/###VSLite/Dendro_zdroj/picea_older_30_trend.rwl", format="auto") 
+serie.zdroj <- read.rwl("C:/Documents and Settings/Administrator/Desktop/Trendy/picea_older_30_trend.txt", format="auto") 
 ### Cesta k tabulce s odhadem poctu chybejicich letokruhu
-chybejici.let <- readXL("F:/IFER/trendy/Chybejici_letokruhy.xls", rownames=FALSE, header=TRUE, na="", sheet="List2", stringsAsFactors=TRUE)
+chybejici.let <- readXL("C:/Documents and Settings/Administrator/Desktop/Trendy/Chybejici_letokruhy.xls", rownames=FALSE, header=TRUE, na="", sheet="List2", stringsAsFactors=TRUE)
 
 
 ###########################################################################
@@ -21,7 +21,6 @@ max(na.omit(chybejici.let[5])) # Maximalni pocet chybejicich letokruhu < dolni o
 ###############################################################
 ### Funkce pro oriznuti serii (nutne celou nacist najednou) ###
 ###############################################################
-vstupni.serie <- serie.zdroj; chyb.let <- merge; dolni.okraj <- 31; horni.okraj <- 50
 
 # jako input parameter pouzivam merge
 orez <- function(vstupni.serie, chyb.let, dolni.okraj, horni.okraj) {
@@ -91,35 +90,33 @@ TRENDS<-function(rwl)
 ### Funkce pro serazeni podle kambialniho stari (nutne celou nacist najednou) ###
 #################################################################################
 
-kambial <- function(vstupni.serie, start.year=30, end.year=80, step=10) {
+kambial <- function(vstupni.serie, start.year=30, end.year=90, step=10) {
 
-	if (((end.year-start.year)%%step)>0|((end.year-start.year)%%step)<0) {print("Chyba! Casove rozpeti musi byt delitelne krokem beze zbytku")}
-	else
-	{
-	print("Provadim vypocet...")
-		chronologie <- data.frame(cambial.age=c(1:end.year))
+		chronologie <- data.frame(cambial.age=c(1:(end.year+12)))
 		pocet.kroku <- (end.year-start.year)/step	
+
 		for (i in c(0:(pocet.kroku-1))) {
 
-				kambialni.stari <- data.frame(N=rep(NA,end.year))
-				serie.vyber <- vstupni.serie[,(intersect(which(rwl.stats(vstupni.serie)[,4]>(start.year+i*step)), which(rwl.stats(vstupni.serie)[,4]<(start.year+(i+1)*step))))]
+			kambialni.stari <- data.frame(N=rep(NA,end.year+12))
+			VYBER <- (intersect(which(rwl.stats(vstupni.serie)[,4]+merge[,6]>(start.year+i*step)), which(rwl.stats(vstupni.serie)[,4]+merge[,6]<=(start.year+(i+1)*step))))
+			serie.vyber <- vstupni.serie[,VYBER]; merge.vyber <- merge[VYBER,]
 
 			for (k in c(1:ncol(serie.vyber))) {			
 			for (l in c(1:nrow(data.frame(na.omit(serie.vyber[,k]))))) {
 				
-				kambialni.stari[l,k] <- data.frame(na.omit(serie.vyber[,k]))[l,]			} 
+				chybi.let <- merge.vyber[k,6]
+				kambialni.stari[(l+chybi.let),k] <- data.frame(na.omit(serie.vyber[,k]))[l,]			} 
 								}
 
-			chronologie <- cbind(chronologie, chron(kambialni.stari, prefix=paste("+",((i+1)*step), sep="")))				
-
-					}
-	print("... Vypocet dokoncen!")
+			chronologie <- cbind(chronologie, chron(kambialni.stari, prefix=paste("+",((i+1)*step), sep=""),biweight=F))				
 		}
-return(list(chron=chronologie, groups=pocet.kroku))
+
+	return(list(chron=chronologie, groups=pocet.kroku))
+
 }
 
 
-kambial.plot <- function(vysledek) {
+kambial.plot <- function(vysledek, start.year=NULL) {
 
 		colvec <- vector(mode="numeric")
 		pocet.chronologii <- vysledek$groups
@@ -130,7 +127,7 @@ kambial.plot <- function(vysledek) {
 		for (i in c(1:pocet.chronologii)) {
 			colvec[i] <- hsv(i/(pocet.chronologii*1.2))
 			lines(vysledek$chron[,(2*i)], col=colvec[i]) }
-		legend('topright', names(vysledek$chron[,seq(2,2*pocet.chronologii, by=2)]), lty=1, col=colvec)
+		legend('topright', paste(start.year, names(vysledek$chron[,seq(2,2*pocet.chronologii, by=2)]), sep=""), lty=1, col=colvec)
 }
 
 ###########################
@@ -152,6 +149,11 @@ vypocet.1 <- orez(hruba.data, merge, 31, 50) # syntax: (zdrojova serie, merge-ch
 vypocet.2 <- orez(hruba.data, merge, 51, 70)
 
 # ... <- ...
+
+kam <- kambial(hruba.data, 26, 96, 10)
+kambial.plot(kam, "26")
+write.table(kam$chron, "C:/Documents and Settings/Administrator/Desktop/Trendy/kambial.txt", sep="\t", col.names=TRUE, row.names=TRUE, quote=TRUE, na="NA")
+
 
 ### Ulozeni tabulky do *.txt (oddelovac tabulator)
 write.table(vypocet.1$chron, "F:/IFER/trendy/chronologie/chron_31_50.txt", sep="\t", col.names=TRUE, row.names=TRUE, quote=TRUE, na="NA")
