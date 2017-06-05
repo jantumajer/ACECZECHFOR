@@ -90,15 +90,14 @@ TRENDS<-function(rwl)
 ### Funkce pro serazeni podle kambialniho stari (nutne celou nacist najednou) ###
 #################################################################################
 
-kambial <- function(vstupni.serie, start.year=30, end.year=90, step=10) {
+kambial <- function(vstupni.serie, start.year=86, end.year=95, pocet.kroku=5, step=1) {
 
-		chronologie <- data.frame(cambial.age=c(1:(end.year+12)))
-		pocet.kroku <- (end.year-start.year)/step	
+		chronologie <- data.frame(cambial.age=c(1:(end.year+12))) # Radeji pridam 12 radku - maximalni pocet chybejicich letokruhu u jednoho stromu (viz tabulka merge)
 
 		for (i in c(0:(pocet.kroku-1))) {
 
 			kambialni.stari <- data.frame(N=rep(NA,end.year+12))
-			VYBER <- (intersect(which(rwl.stats(vstupni.serie)[,4]+merge[,6]>(start.year+i*step)), which(rwl.stats(vstupni.serie)[,4]+merge[,6]<=(start.year+(i+1)*step))))
+			VYBER <- (intersect(which(rwl.stats(vstupni.serie)[,4]+merge[,6]>=(start.year+i*step)), which(rwl.stats(vstupni.serie)[,4]+merge[,6]<=(end.year+i*step))))
 			serie.vyber <- vstupni.serie[,VYBER]; merge.vyber <- merge[VYBER,]
 
 			for (k in c(1:ncol(serie.vyber))) {			
@@ -108,7 +107,7 @@ kambial <- function(vstupni.serie, start.year=30, end.year=90, step=10) {
 				kambialni.stari[(l+chybi.let),k] <- data.frame(na.omit(serie.vyber[,k]))[l,]			} 
 								}
 
-			chronologie <- cbind(chronologie, chron(kambialni.stari, prefix=paste("+",((i+1)*step), sep=""),biweight=F))				
+			chronologie <- cbind(chronologie, chron(kambialni.stari, prefix=paste("+",((i)*step), sep=""),biweight=F))				
 		}
 
 	return(list(chron=chronologie, groups=pocet.kroku))
@@ -150,8 +149,10 @@ vypocet.2 <- orez(hruba.data, merge, 51, 70)
 
 # ... <- ...
 
-kam <- kambial(hruba.data, 26, 96, 10)
-kambial.plot(kam, "26")
+kam <- kambial(hruba.data, 86, 95, 5, 1) # 40-lete v roce 1961
+kam <- kambial(hruba.data, 36, 45, 5, 1) # 40-lete v roce 2011
+
+kambial.plot(kam, "36")
 write.table(kam$chron, "C:/Documents and Settings/Administrator/Desktop/Trendy/kambial.txt", sep="\t", col.names=TRUE, row.names=TRUE, quote=TRUE, na="NA")
 
 
