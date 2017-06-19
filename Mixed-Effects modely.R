@@ -1,7 +1,7 @@
 library(lme4); library(nlme)
 library(piecewiseSEM) 
 
-Dataset <- readXL("F:/IFER/trendy/klimadata/Database_1961to2013.xlsx", rownames=FALSE, header=TRUE, na="", sheet="trend+vysokofrekvencni", stringsAsFactors=TRUE)
+Dataset <- readXL("C:/honzaT/aceczechfor/Mean_paper/Database_1961to2013.xlsx", rownames=FALSE, header=TRUE, na="", sheet="trend+vysokofrekvencni", stringsAsFactors=TRUE) # Cesta na Applu
 
 #### Regrese ####
 #################
