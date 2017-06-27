@@ -11,6 +11,92 @@ Dataset_GLM <- Dataset[c(54:212),] # do roku 2013
 
 ########################
 
+
+################################################
+## GLM s interakcemi nezavislych promennych a vysky
+################################################
+
+GLM.A.pasmo <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + NDEP_A:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM) # Varianta se zachovanim NDEP v interakci se srazkami - nizsi AIC, vyssi BIC
+summary(GLM.A.pasmo)
+
+GLM.B.pasmo <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B + NDEP_B:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+summary(GLM.B.pasmo)
+
+################################################
+## Srovnani alternativnich modelu podle AIC
+
+A_full <- glm(TRW_A ~ Pasmo + T.3.5._A:Pasmo + Veg_Prec_A:Pasmo + NDEP_A:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_I <- glm(TRW_A ~ T.3.5._A:Pasmo + Veg_Prec_A:Pasmo + NDEP_A:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_T <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A:Pasmo + NDEP_A:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_P <- glm(TRW_A ~ Pasmo + T.3.5._A:Pasmo + Veg_Prec_A + NDEP_A:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_N <- glm(TRW_A ~ Pasmo + T.3.5._A:Pasmo + Veg_Prec_A:Pasmo + NDEP_A + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_C <- glm(TRW_A ~ Pasmo + T.3.5._A:Pasmo + Veg_Prec_A:Pasmo + NDEP_A:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(A_full, A_I, A_T, A_P, A_N, A_C) # Nejlepsi AIC pro model bez vlivu Pasma na srazky
+###############
+
+A_PI <- glm(TRW_A ~ T.3.5._A:Pasmo + Veg_Prec_A + NDEP_A:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_PT <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + NDEP_A:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_PN <- glm(TRW_A ~ Pasmo + T.3.5._A:Pasmo + Veg_Prec_A + NDEP_A + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_PC <- glm(TRW_A ~ Pasmo + T.3.5._A:Pasmo + Veg_Prec_A + NDEP_A:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(A_P, A_PI, A_PT, A_PN, A_PC) # Nejlepsi AIC pro model bez vlivu Pasma na srazky + teplotu
+###############
+
+A_PTI <- glm(TRW_A ~ T.3.5._A + Veg_Prec_A + NDEP_A:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_PTN <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + NDEP_A + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+A_PTC <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + NDEP_A:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(A_PT, A_PTI, A_PTN, A_PTC) # Nejlepsi AIC pro model bez vlivu Pasma na srazky + teplotu + CO2
+###############
+
+A_PTCI <- glm(TRW_A ~ T.3.5._A + Veg_Prec_A + NDEP_A:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+A_PTCN <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + NDEP_A + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(A_PTC, A_PTCI, A_PTCN) # Vyrazeni dalsich interakci zhorsuje AIC -> nejlepsi je model s interakcemi pro vliv pasma na intercept a N
+############################################################
+
+B_full <- glm(TRW_B ~ Pasmo + T.3.5._B:Pasmo + Veg_Prec_B:Pasmo + NDEP_B:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_I <- glm(TRW_B ~ T.3.5._B:Pasmo + Veg_Prec_B:Pasmo + NDEP_B:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_T <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B:Pasmo + NDEP_B:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_P <- glm(TRW_B ~ Pasmo + T.3.5._B:Pasmo + Veg_Prec_B + NDEP_B:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_N <- glm(TRW_B ~ Pasmo + T.3.5._B:Pasmo + Veg_Prec_B:Pasmo + NDEP_B + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_C <- glm(TRW_B ~ Pasmo + T.3.5._B:Pasmo + Veg_Prec_B:Pasmo + NDEP_B:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(B_full, B_I, B_T, B_P, B_N, B_C) # Nejlepsi AIC pro model bez vlivu Pasma na teploty
+###############
+
+B_TI <- glm(TRW_B ~ T.3.5._B + Veg_Prec_B:Pasmo + NDEP_B:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_TP <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B + NDEP_B:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_TN <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B:Pasmo + NDEP_B + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_TC <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B:Pasmo + NDEP_B:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(B_T, B_TI, B_TP, B_TN, B_TC) # Nejlepsi AIC pro model bez vlivu Pasma na teplotu + srazky
+###############
+
+B_TPI <- glm(TRW_B ~ T.3.5._B + Veg_Prec_B + NDEP_B:Pasmo + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_TPN <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B + NDEP_B + CO2:Pasmo, family=gaussian(identity), data=Dataset_GLM)
+B_TPC <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B + NDEP_B:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(B_TP, B_TPI, B_TPN, B_TPC) # TADY JE PROBLEM - MODEL BEZ VLIVU PASMA NA CO2 MA MIRNE HORSI AIC NEZ MODEL S VLIVEM (ALE U BIC JE TO NAOPAK)
+
+B_TPCI <- glm(TRW_B ~ T.3.5._B + Veg_Prec_B + NDEP_B:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+B_TPCN <- glm(TRW_B ~ Pasmo + T.3.5._B + Veg_Prec_B + NDEP_B + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(B_TP, B_TPC, B_TPCI, B_TPCN)
+###############
+
+A_PTCI <- glm(TRW_A ~ T.3.5._A + Veg_Prec_A + NDEP_A:Pasmo + CO2, family=gaussian(identity), data=Dataset_GLM)
+A_PTCN <- glm(TRW_A ~ Pasmo + T.3.5._A + Veg_Prec_A + NDEP_A + CO2, family=gaussian(identity), data=Dataset_GLM)
+
+AIC(A_PTC, A_PTCI, A_PTCN) # Vyrazeni dalsich interakci zhorsuje AIC -> nejlepsi je model s interakcemi pro vliv pasma na intercept a N
+
+################################################
+################################################
+## Puvodni cast skriptu
+################################################
+################################################
+
 # Konstrukce modelu (podle Bates (2010): lme4:Mixed-effects modeling with R, kapitola 3.2.):
 # fixni efekty - populacni intercept a populacni smernice nezavislych promennych
 # nahodne efekty (...|...) - odchylky od populacniho interceptu a smernice nezavisle promenne pro danou kategorii
@@ -161,6 +247,9 @@ citlivost(GLM.A, 0.1, "A", t)
 citlivost(GLM.B, 0.1, "B", t)
 citlivost(MELM.A, 0.1, "A", t)
 citlivost(MELM.B, 0.1, "B", t)
+
+citlivost(GLM.A.pasmo, 0.1, "A", t)
+citlivost(GLM.B.pasmo, 0.1, "B", t)
 
 
 ################# Normalita dat ######################
