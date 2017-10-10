@@ -11,9 +11,6 @@ Dataset_GLM <- Dataset[c(54:212),] # do roku 2013
 
 ########################
 
-
-cite(nlme)
-
 ################################################
 ## GLM s interakcemi nezavislych promennych a vysky
 ################################################
